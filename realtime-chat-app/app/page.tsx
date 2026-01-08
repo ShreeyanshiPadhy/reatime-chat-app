@@ -11,14 +11,18 @@ export default function HomePage(){
   const [username, setUserName] = useState("");
 
   useEffect(() => {
-    socket.on("userJoined", ({username, message}) => {
-      setMessages((prevMessages) => [...prevMessages, {sender: "System", message}]);
+    socket.on("userJoined", ({message}) => {
+      setMessages((prevMessages) => [...prevMessages, {sender: "system", message}]);
+    });
+
+    socket.on("message", (data) => {
+      setMessages((prevMessages) => [...prevMessages, data]);
     });
 
     return () => {
-      socket.off("userJoined");
-      
-  }
+      socket.off("userJoined");  
+      socket.off("message");
+    }
 }, []);
 
   function handleJoin(e: { preventDefault: () => void; }){
@@ -30,12 +34,17 @@ export default function HomePage(){
   }
 
   const handleSendMessage = (message: string) => {
-    console.log(message);
+    const data = {
+      roomId: room,
+      sender: username,
+      message
+    };
+    socket.emit("message", data);
   };
 
-  return <div className="flex mt-30 text-black justify-center w-full">
+  return <div className="flex text-black justify-center w-full">
     {!joined ? (
-      <div className="flex flex-col justify-center items-center">
+      <div className="flex mt-30 flex-col justify-center items-center">
         <form onSubmit={handleJoin} className="flex flex-col bg-gray-300 p-6 mt-20 rounded-lg">
           <label className="font-bold">UserName</label>
           <input type="text" value={username} placeholder="Enter your username" required onChange={(e) => setUserName(e.target.value)} className="border border-gray-400 p-2 mb-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"/>
@@ -45,9 +54,9 @@ export default function HomePage(){
         </form>
       </div>
     ) : (
-      <div className="w-full max-w-3xl mx-auto">
+      <div className="w-full mt-20 max-w-3xl">
       <h1 className="font-bold">Room 1</h1>
-      <div className="h-[200px] overflow-y-auto p-4 mb-4 bg-gray-200 border-2 rounded-lg">
+      <div className="h-[420px] overflow-y-auto p-4 mb-4 bg-gray-200 border-2 rounded-lg">
         {messages.map((msg,index) =>(
           <ChatMsg
             key={index}
