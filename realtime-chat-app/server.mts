@@ -14,9 +14,13 @@ app.prepare().then(() => {
     const io = new Server(httpServer);
     io.on("connection", (socket) => {
         console.log(`New client connected : ${socket.id}`);
+        let userRoom = "";
+        let userName = "";
 
         socket.on("joinRoom", ({roomId, username}) => {
             socket.join(roomId);
+            userRoom = roomId;
+            userName = username;
             console.log(`${username} has joined room: ${roomId}`);
             io.to(roomId).emit("userJoined", {username, message: `${username} has joined the room.`});
         });
@@ -28,6 +32,9 @@ app.prepare().then(() => {
 
         socket.on("disconnect", () => {
             console.log(`Client disconnected : ${socket.id}`);
+            if (userRoom && userName) {
+                io.to(userRoom).emit("userLeft", {username: userName, message: `${userName} has left the room.`});
+            }
         });
     });
 

@@ -7,16 +7,22 @@ import { ChatMsg } from "./components/ChatMsg";
 export default function HomePage(){
   const [room, setRoom] = useState("");
   const [joined, setJoined] = useState(false);
-  const [messages, setMessages] = useState<{sender: string, message: string}[]>([]);
+  const [left, setLeft] = useState(false);
+  const [messages, setMessages] = useState<{sender: string, message: string, timestamp: string}[]>([]);
   const [username, setUserName] = useState("");
 
   useEffect(() => {
     socket.on("userJoined", ({message}) => {
-      setMessages((prevMessages) => [...prevMessages, {sender: "system", message}]);
+      setMessages((prevMessages) => [...prevMessages, {sender: "system", message, timestamp: new Date().toLocaleTimeString()}]);
     });
 
-    socket.on("message", (data) => {
-      setMessages((prevMessages) => [...prevMessages, data]);
+    
+
+    socket.on("message", (data: {sender: string, message: string, timestamp?: string}) => {
+      setMessages((prevMessages) => [...prevMessages, {
+        ...data,
+        timestamp: data.timestamp || new Date().toLocaleTimeString()
+      }]);
     });
 
     return () => {
@@ -24,6 +30,8 @@ export default function HomePage(){
       socket.off("message");
     }
 }, []);
+
+
 
   function handleJoin(e: { preventDefault: () => void; }){
     e.preventDefault();
@@ -37,40 +45,69 @@ export default function HomePage(){
     const data = {
       roomId: room,
       sender: username,
-      message
+      message,
+      timestamp: new Date().toLocaleTimeString()
     };
     socket.emit("message", data);
   };
 
-  return <div className="flex text-black justify-center w-full">
+  return <div className="flex justify-center items-center w-full min-h-screen bg-gradient-to-br from-orange-200 via-orange-300 to-orange-400">
     {!joined ? (
-      <div className="flex mt-30 flex-col justify-center items-center">
-        <form onSubmit={handleJoin} className="flex flex-col bg-gray-300 p-6 mt-20 rounded-lg">
-          <label className="font-bold">UserName</label>
-          <input type="text" value={username} placeholder="Enter your username" required onChange={(e) => setUserName(e.target.value)} className="border border-gray-400 p-2 mb-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-          <label className="font-bold">Room ID</label>
-          <input type="text" value={room} placeholder="Enter room ID" required onChange={(e) => setRoom(e.target.value)} className="border border-gray-400 p-2 mb-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-          <button type="submit" className="border border-gray-400 bg-gray-400 p-2 mb-2 rounded focus:ring-2 focus:ring-blue-500">Join Room</button>
-        </form>
+      <div className="flex flex-col justify-center items-center w-full max-w-md px-4">
+        <div className="bg-white p-8 rounded-2xl shadow-xl w-full">
+          <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Join Chat Room</h2>
+          <form onSubmit={handleJoin} className="flex flex-col space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Username</label>
+              <input 
+                type="text" 
+                value={username} 
+                placeholder="Enter your username" 
+                required 
+                onChange={(e) => setUserName(e.target.value)} 
+                className="w-full px-5 py-3 border-2 border-orange-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white text-gray-900 placeholder-gray-500 text-base shadow-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Room ID</label>
+              <input 
+                type="text" 
+                value={room} 
+                placeholder="Enter room ID" 
+                required 
+                onChange={(e) => setRoom(e.target.value)} 
+                className="w-full px-5 py-3 border-2 border-orange-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white text-gray-900 placeholder-gray-500 text-base shadow-sm"
+              />
+            </div>
+            <button 
+              type="submit" 
+              className="w-full px-8 text-white py-3 rounded-xl bg-orange-500 hover:bg-orange-600 focus:ring-2 focus:ring-orange-400 text-base font-semibold shadow-md duration-200 mt-6"
+            >
+              Join Room
+            </button>
+          </form>
+        </div>
       </div>
     ) : (
-      <div className="w-full mt-20 max-w-3xl">
-      <h1 className="font-bold">Room 1</h1>
-      <div className="h-[420px] overflow-y-auto p-4 mb-4 bg-gray-200 border-2 rounded-lg">
-        {messages.map((msg,index) =>(
-          <ChatMsg
-            key={index}
-            sender={msg.sender}
-            message={msg.message}
-            isSenderMsg={msg.sender === username}
-          />
-        ))}
+      <div className="flex flex-col mt-20 w-full max-w-4xl h-[700px] bg-white rounded-lg shadow-xl overflow-hidden">
+        <div className="bg-white p-4 border-b border-orange-300">
+          <h1 className="font-bold text-xl text-orange-600">Room {room}</h1>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4 bg-orange-50">
+          {messages.map((msg,index) =>(
+            <ChatMsg
+              key={index}
+              message={msg.message}
+              sender={msg.sender}
+              isSenderMsg={msg.sender === username}
+              timestamp={msg.timestamp}
+            />
+          ))}
+        </div>
+        <div className="bg-white p-4 border-t border-orange-300">
+          <ChatForm onSendMessage={handleSendMessage} />
+        </div>
       </div>
-      <div>
-        Add Chat Room
-      </div>
-      <ChatForm onSendMessage={handleSendMessage} />
-    </div>
     )}
   </div>
 }
