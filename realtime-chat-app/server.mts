@@ -23,7 +23,7 @@ app.prepare().then(() => {
 
         socket.on("message", ({roomId, sender, message}) => {
             console.log(`Message from ${sender} in room ${roomId}: ${message}`);
-            socket.to(roomId).emit("message", {sender, message});
+            io.to(roomId).emit("message", {sender, message});
         });
 
         socket.on("disconnect", () => {
