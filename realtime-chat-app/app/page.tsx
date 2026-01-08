@@ -90,8 +90,8 @@ export default function HomePage(){
       </div>
     ) : (
       <div className="flex flex-col mt-20 w-full max-w-4xl h-[700px] bg-white rounded-lg shadow-xl overflow-hidden">
-        <div className="bg-white p-4 border-b border-orange-300">
-          <h1 className="font-bold text-xl text-orange-600">Room {room}</h1>
+        <div className="bg-orange-700 p-4 border-b border-orange-800">
+          <h1 className="font-bold text-xl text-white">Room {room}</h1>
         </div>
         <div className="flex-1 overflow-y-auto p-4 bg-orange-50">
           {messages.map((msg,index) =>(
@@ -104,7 +104,7 @@ export default function HomePage(){
             />
           ))}
         </div>
-        <div className="bg-white p-4 border-t border-orange-300">
+        <div className="bg-white p-4 border-t border-gray-200">
           <ChatForm onSendMessage={handleSendMessage} />
         </div>
       </div>
